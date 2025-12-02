@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Application Tracker</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Confetti animations -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
+  <!-- Minimal inline styles -->
+  <style>
+    .dashboard-card { padding: .6rem .9rem; border-radius: .5rem; background:#f7f7f9; min-width:150px; }
+    .badge-applied { background:#0d6efd; color:#fff; }
+    .badge-phonescreen { background:#fd7e14; color:#fff; }
+    .badge-technicalinterview { background:#6f42c1; color:#fff; }
+    .badge-offer { background:#198754; color:#fff; }
+    .badge-accepted { background:#0f5132; color:#fff; }
+    .badge-rejected { background:#dc3545; color:#fff; }
+    .badge-wishlist { background:#6c757d; color:#fff; }
+
+    .kanban-column { min-width:220px; background:#f8f9fa; border-radius:.5rem; padding:.5rem; max-height:400px; overflow:auto; }
+    .kanban-card { background:#fff; border-radius:.4rem; padding:.5rem; margin:.5rem 0; box-shadow:0 1px 2px rgba(0,0,0,0.05); cursor:grab; }
+
+    .confetti-canvas { position:fixed; pointer-events:none; top:0; left:0; width:100%; height:100%; z-index:1050; }
+
+    .ghost-warning { background: #fff3cd; padding:.25rem .5rem; border-radius:.25rem; color:#856404; display:inline-block; font-size:.85rem; }
+
+    .deadline-badge { font-size:.8rem; margin-left:.4rem; }
+
+    /* Print styles */
+    .print-hide { display: inline-block; }
+    @media print {
+      .no-print, .print-hide { display:none !important; }
+      body { background: #fff; color:#000; }
+      .dashboard-card { background:transparent !important; box-shadow:none !important; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Confetti canvas -->
+  <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
+
+  <div class="container py-4">
+    <!-- Page title -->
+    <h1 class="text-center mb-3">Job Application Tracker</h1>
+
+    <!-- Dashboard + action buttons -->
+    <div class="d-flex gap-3 mb-3 flex-wrap align-items-center">
+      <!-- Dashboard stats -->
+      <div id="dashboard" class="d-flex gap-2 flex-wrap">
+        <div class="dashboard-card" id="totalApplied">Applied: 0</div>
+        <div class="dashboard-card" id="inProgress">In Progress: 0</div>
+        <div class="dashboard-card" id="offers">Offers: 0</div>
+        <div class="dashboard-card" id="rejectionRate">Rejection Rate: 0%</div>
+        <div class="dashboard-card" id="daysSinceLast">Days Since Last Application: 0</div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="ms-auto d-flex gap-2 align-items-center no-print">
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addJobModal">Add Job</button>
+        <button class="btn btn-success" onclick="exportCSV()">Export CSV</button>
+        <button class="btn btn-secondary" onclick="exportJSON()">Export JSON</button>
+        <input type="file" id="importJSONFile" class="form-control" style="max-width:200px;" onchange="importJSON(this.files[0])" />
+        <button class="btn btn-danger" onclick="clearAllJobs()">Clear All</button>
+      </div>
+    </div>
+
+    <!-- Filters, search, show archived, summary -->
+    <div class="d-flex gap-2 mb-3 align-items-center flex-wrap no-print">
+      <select id="filterStatus" class="form-select" style="max-width: 220px;">
+        <option value="all">All Statuses</option>
+        <option value="Wishlist">Wishlist</option>
+        <option value="Applied">Applied</option>
+        <option value="Phone Screen">Phone Screen</option>
+        <option value="Technical Interview">Technical Interview</option>
+        <option value="Offer">Offer</option>
+        <option value="Rejected">Rejected</option>
+        <option value="Accepted">Accepted</option>
+      </select>
+
+      <input id="searchInput" class="form-control" placeholder="Search Company / Role / Location" style="max-width: 340px;" />
+
+      <label class="form-check-label ms-2">
+        <input type="checkbox" id="showArchivedToggle" class="form-check-input me-1" /> Show Archived Rejected Jobs
+      </label>
+
+      <button class="btn btn-info ms-auto" onclick="generateWeeklySummary()">Weekly Summary</button>
+    </div>
+
+    <!-- Today's tasks + upcoming events -->
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <div id="todaysTasks" class="alert alert-warning mb-0" style="display:none;">
+          <h6 class="mb-2">Today's Critical Tasks</h6>
+          <ul id="todaysTasksList" class="mb-0"></ul>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div id="upcomingEvents" class="mb-0">
+          <h6>Upcoming Events</h6>
+          <ul id="upcomingEventsList" class="list-group list-group-flush"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Job table -->
+    <div class="table-responsive mb-3">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th onclick="sortTable('company')" style="cursor:pointer">Company</th>
+            <th onclick="sortTable('role')" style="cursor:pointer">Role</th>
+            <th>Link</th>
+            <th onclick="sortTable('location')" style="cursor:pointer">Location</th>
+            <th onclick="sortTable('date')" style="cursor:pointer">Date Applied</th>
+            <th onclick="sortTable('status')" style="cursor:pointer">Status</th>
+            <th>Salary</th>
+            <th>Excitement</th>
+            <th>Priority</th>
+            <th>Last Updated</th>
+            <th>Deadline</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="jobTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Charts -->
+    <div class="d-flex gap-3 flex-wrap mb-4">
+      <canvas id="statusChart" style="max-width:420px;"></canvas>
+      <canvas id="sourceChart" style="max-width:420px;"></canvas>
+    </div>
+
+    <!-- Kanban board -->
+    <div id="kanbanBoard" class="d-flex gap-3 mt-4 flex-wrap"></div>
+
+  </div>
+
+  <!-- Add/Edit Job Modal -->
+  <div class="modal fade" id="addJobModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="jobForm">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalTitle">Add Job Application</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Job form inputs -->
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Company *</label>
+                <input type="text" class="form-control" id="companyInput" required />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Role *</label>
+                <input type="text" class="form-control" id="roleInput" required />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Job Link (optional)</label>
+                <input type="url" class="form-control" id="linkInput" placeholder="https://..." />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Location</label>
+                <select class="form-select" id="locationInput">
+                  <option>Remote</option>
+                  <option>On-site</option>
+                  <option>Hybrid</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Date Applied (optional)</label>
+                <input type="date" class="form-control" id="dateInput" />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Status</label>
+                <select class="form-select" id="statusInput">
+                  <option>Wishlist</option>
+                  <option>Applied</option>
+                  <option>Phone Screen</option>
+                  <option>Technical Interview</option>
+                  <option>Offer</option>
+                  <option>Rejected</option>
+                  <option>Accepted</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Salary Range (optional)</label>
+                <input type="text" class="form-control" id="salaryInput" placeholder="$120–150k" />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Excitement Level</label>
+                <select class="form-select" id="exciteInput">
+                  <option value="1">⭐</option>
+                  <option value="2">⭐⭐</option>
+                  <option value="3">⭐⭐⭐</option>
+                  <option value="4">⭐⭐⭐⭐</option>
+                  <option value="5">⭐⭐⭐⭐⭐</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Job Source (optional)</label>
+              <input type="text" class="form-control" id="sourceInput" placeholder="LinkedIn, referral, company site" />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Notes / Next Steps (optional)</label>
+              <textarea class="form-control" id="notesInput" rows="2"></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Contact Person & Info (optional)</label>
+              <input type="text" class="form-control" id="contactInput" placeholder="Name / Email / Phone" />
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Application Deadline</label>
+                <input type="date" class="form-control" id="deadlineInput" />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">OA / Coding Test Link</label>
+                <input type="url" class="form-control" id="oaLinkInput" placeholder="https://hackerrank.com/..." />
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Resume Version Used</label>
+              <select class="form-select" id="resumeVersionInput">
+                <option>Fall 2025 v1</option>
+                <option>Fall 2025 v2 (FAANG)</option>
+                <option>Quant/Trading Cut</option>
+                <option>Startup Cut</option>
+              </select>
+            </div>
+
+            <!-- Priority & Dream Company -->
+            <div class="form-check mb-2">
+              <input type="checkbox" class="form-check-input" id="priorityInput" />
+              <label class="form-check-label" for="priorityInput">High Priority ⭐</label>
+            </div>
+
+            <div class="form-check mb-2">
+              <input type="checkbox" class="form-check-input" id="dreamCompanyInput" />
+              <label class="form-check-label text-warning fw-bold" for="dreamCompanyInput">Dream Company</label>
+            </div>
+
+          </div>
+
+          <!-- Modal footer -->
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary w-100" id="saveJobBtn">Save Job</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Custom JS -->
+  <script src="script.js"></script>
+</body>
+</html>

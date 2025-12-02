@@ -38,8 +38,5 @@ Keyboard shortcuts:
 `N` → Add new application  
 `/` → Focus search
 
-Anna · Software Engineer · Austin, TX · December 2025  
-Currently interviewing — always open to chatting about code, coffee, or both
-
 ---
 Star this repo if it helps you stay sane during the job hunt!

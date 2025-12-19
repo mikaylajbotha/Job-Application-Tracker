@@ -1,0 +1,264 @@
+/* ------------------------------------------------------------
+   CSS VARIABLES (LIGHT MODE)
+------------------------------------------------------------ */
+:root {
+  --bg: #ffffff;                
+  --text: #1a1a1a;              
+  --card-bg: #f8f9fa;           
+  --border: #e2e3e5;            
+  --hover: #f1f5f9;             
+
+  --primary: #0d6efd;           
+  --warning: #ffc107;           
+  --danger: #dc3545;            
+  --success: #198754;           
+  --orange: #fd7e14;            
+  --purple: #6610f2;            
+  --cyan: #0dcaf0;              
+
+  --shadow-sm: 0 0 5px rgba(0,0,0,0.08);   
+  --shadow-md: 0 4px 10px rgba(0,0,0,0.12); 
+
+  --radius: 0.55rem;            
+}
+
+/* ------------------------------------------------------------
+   GLOBAL STYLES
+------------------------------------------------------------ */
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.3s, color 0.3s;
+}
+
+a { color: var(--primary); }
+
+.btn, .kanban-card, table, .dashboard-card {
+  transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+}
+
+textarea { resize: vertical; }
+.modal-lg { max-width: 900px; }
+
+/* ------------------------------------------------------------
+   STATUS BADGES
+------------------------------------------------------------ */
+.badge {
+  padding: 0.35em 0.65em;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 0.85em;
+  display: inline-block;
+  transition: transform 0.15s;
+}
+
+.badge:hover { transform: scale(1.1); }
+
+.badge-wishlist { background: #6c757d; color: #fff; }
+.badge-applied { background: var(--primary); color: #fff; }
+.badge-phonescreen { background: var(--orange); color: #fff; }
+.badge-technicalinterview { background: var(--warning); color: #212529; font-weight: 700; }
+.badge-offer { background: var(--success); color: #fff; }
+.badge-rejected { background: var(--danger); color: #fff; }
+.badge-accepted { background: var(--purple); color: #fff; }
+
+.badge-oa { background: var(--cyan); color: #212529; font-weight: 700; }
+.badge-deadline-soon { background: var(--warning); color: #212529; font-weight: 700; }
+.badge-ghosted { background: #ff6b6b; color: #fff; }
+
+.countdown-timer {
+  font-weight: 700;
+  color: #d63384;
+  margin-left: 0.35rem;
+  font-size: 0.85em;
+}
+
+/* ------------------------------------------------------------
+   TABLE
+------------------------------------------------------------ */
+table {
+  width: 100%;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  border-collapse: collapse;
+}
+
+thead th {
+  background: var(--hover);
+  padding: 0.75rem;
+  cursor: pointer;
+  font-weight: 700;
+  user-select: none;
+  color: #212529;
+}
+
+tbody td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+tbody tr:hover {
+  background: var(--hover);
+  transform: translateX(3px);
+}
+
+table td button { margin-right: 0.25rem; }
+
+/* ------------------------------------------------------------
+   DASHBOARD CARDS
+------------------------------------------------------------ */
+#dashboard {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.dashboard-card {
+  flex: 1;
+  min-width: 180px;
+  text-align: center;
+  background: var(--card-bg);
+  color: var(--text);
+  padding: 1rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+#streakCounter {
+  background: #fff3cd;
+  color: #664d03;
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------
+   TODAY'S TASKS
+------------------------------------------------------------ */
+#todaysTasks {
+  background: #fff3cd;
+  border: 1px solid #ffeaaa;
+  color: #7a5a00;
+  padding: 1rem;
+  border-radius: var(--radius);
+  animation: pulse 2.5s infinite;
+}
+
+#todaysTasksList li { margin-bottom: 0.35rem; }
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 rgba(255,193,7,0.5); }
+  50% { box-shadow: 0 0 18px rgba(255,193,7,0.8); }
+  100% { box-shadow: 0 0 0 rgba(255,193,7,0.5); }
+}
+
+/* ------------------------------------------------------------
+   UPCOMING EVENTS
+------------------------------------------------------------ */
+#upcomingEvents {
+  background: var(--card-bg);
+  padding: 1rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  color: var(--text);
+}
+
+/* ------------------------------------------------------------
+   KANBAN BOARD
+------------------------------------------------------------ */
+#kanbanBoard {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+.kanban-column {
+  min-width: 220px;
+  background: var(--card-bg);
+  border: 1px solid #dee2e6;
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  color: var(--text);
+}
+
+.kanban-column h5 {
+  text-align: center;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--text);
+}
+
+.kanban-card {
+  background: var(--bg);
+  padding: 0.6rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 0.6rem;
+  cursor: grab;
+  color: var(--text);
+}
+
+.kanban-card:hover { transform: scale(1.03); }
+
+.dragging {
+  opacity: 0.6;
+  border: 2px dashed var(--primary);
+}
+
+/* ------------------------------------------------------------
+   BUTTONS
+------------------------------------------------------------ */
+.btn {
+  min-width: 100px;
+  border-radius: var(--radius);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-gcal {
+  background: #4285f4;
+  color: #fff;
+  padding: 0.35em 0.75em;
+  border-radius: var(--radius);
+  font-size: 0.85em;
+}
+
+.btn-gcal:hover { background: #3367d6; }
+
+/* ------------------------------------------------------------
+   PRIORITY FLAG
+------------------------------------------------------------ */
+.priority-star {
+  color: gold;
+  font-size: 1.25rem;
+  margin-left: 0.3rem;
+}
+
+/* ------------------------------------------------------------
+   PRINT / MOBILE
+------------------------------------------------------------ */
+@media print {
+  body { background: #fff !important; color: #000 !important; }
+  #dashboard, #kanbanBoard, #todaysTasks, #upcomingEvents,
+  .btn, .btn-gcal { display: none !important; }
+  table { box-shadow: none !important; }
+}
+
+@media (max-width: 576px) {
+  #dashboard { flex-direction: column; }
+  #kanbanBoard { flex-direction: column; }
+  .btn-gcal { margin-top: 0.4rem; }
+  table { font-size: 0.85rem; }
+}
